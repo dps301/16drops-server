@@ -62,19 +62,17 @@ router.get('/items', function(req, res){
                     if(itemVal[i][j].type != 0){
                         pool.query(query,[i,j,itemVal[i][j].formItemNo])
                             .then(function (result) {
-                                setTimeout(function(){
-                                    itemVal[result[0].i][result[0].j].choice = result;
-                                    console.log(itemVal[result[0].i][result[0].j])
-                                    console.log(result)
-                                    if(result[0].i==itemVal.length-1&&result[0].j==itemVal[itemVal.length-1].length-1){
-                                        for(var i=0;i<returnVal.length;i++){
-                                            returnVal[i].menu=itemVal[i]
-                                            if( i == returnVal.length-1){
-                                                res.send(returnVal)
-                                            }
+                                itemVal[result[0].i][result[0].j].choice = result;
+                                console.log(itemVal[result[0].i][result[0].j])
+                                console.log(result)
+                                if(result[0].i==itemVal.length-1&&result[0].j==itemVal[itemVal.length-1].length-1){
+                                    for(var i=0;i<returnVal.length;i++){
+                                        returnVal[i].menu=itemVal[i]
+                                        if( i == returnVal.length-1){
+                                            res.send(returnVal)
                                         }
                                     }
-                                })
+                                }
                             }
                         )
                     }
