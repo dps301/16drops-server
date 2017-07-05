@@ -3,16 +3,7 @@ var router = express.Router();
 
 
 var mysql = require('promise-mysql');
-var sql = require('mysql2');
-var con = sql.createConnection({
-    host     : '52.78.230.42',
-    user     : 'root',
-    password : '1234',
-    port     : 3306,
-    database : '16drop',
-    connectionLimit: 50
 
-});
 var dbconfig   = require('./config/db.js');
 pool = mysql.createPool(dbconfig);
 
