@@ -9,7 +9,7 @@ pool = mysql.createPool(dbconfig);
 
 router.get('/', function(req, res){
     var userNo = req.header('userNo')
-    pool.query('SELECT form_no `formNo`, title , description, propose, due  FROM 16drop.form where store_store_no=1',[userNo]).
+    pool.query('SELECT form_no `formNo`, title , description, propose, due  FROM 16drop.form where store_no=1',[userNo]).
     then(function(rows) {
         res.send(rows[0]);
     })
@@ -19,10 +19,10 @@ router.get('/', function(req, res){
 });
 router.get('/title', function(req, res){
     var userNo = req.header('userNo')
-    pool.query('SELECT form_group_no `formGroupNo`, title, descript, operation  FROM 16drop.form_group where form_form_no =1 order by form_group_no asc;',[userNo]).
-    then(function(rows) {
-        res.send(rows);
-    })
+    pool.query('SELECT form_group_no `formGroupNo`, title, descript  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[userNo]).
+        then(function(rows) {
+            res.send(rows);
+        })
         .catch(function (err) {
             res.send(err);
         })
@@ -33,8 +33,10 @@ router.get('/items', function(req, res){
     var returnVal;
     var itemVal=[];
     var promiseArr =[];
-    pool.query('SELECT form_group_no `formGroupNo`, title, descript, operation  FROM 16drop.form_group where form_form_no =1 order by form_group_no asc;',[userNo]).
+    var promiseArr2 =[];
+    pool.query('SELECT form_group_no `formGroupNo`, title, descript  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[userNo]).
         then(function(row) {
+
             var query = ' select title, type , form_item_no "formItemNo" from form_item where form_group_no =?  order by number asc'
             for(var i = 0; i<row.length; i++){
                 promiseArr.push(pool.query(query,[row[i].formGroupNo]))
@@ -47,64 +49,44 @@ router.get('/items', function(req, res){
         })
         .then(function (rows) {
             itemVal = rows;
-            var query = ' select ? "i",? "j", content ,score,description from select_item where form_item_form_item_no =? order by number asc'
-            for(var i = 0; i<itemVal.length; i++){
-                for( var j = 0; j <itemVal[i].length ; j++){
-                    if(itemVal[i][j].type != 0){
-                        pool.query(query,[i,j,itemVal[i][j].formItemNo])
-                            .then(function (result) {
-                                itemVal[result[0].i][result[0].j].choice = result;
-                                console.log(itemVal[result[0].i][result[0].j])
-                                console.log(result)
-                                if(result[0].i==itemVal.length-1&&result[0].j==itemVal[itemVal.length-1].length-1){
-                                    for(var i=0;i<returnVal.length;i++){
-                                        returnVal[i].menu=itemVal[i]
-                                        if( i == returnVal.length-1){
-                                            res.send(returnVal)
-                                        }
-                                    }
-                                }
-                            }
-                        )
-                    }
-
+            for(var i = 0 ; i< returnVal.length; i++){
+                returnVal[i].items = rows[i];
+            }
+            var query = ' select ? "index",? "jindex", content ,score,description from select_item where form_item_no =? order by number asc'
+            for(var i = 0; i<rows.length; i++) {
+                for (var j = 0; j < rows[i].length; j++) {
+                    promiseArr2.push(pool.query(query, [i,j,rows[i][j].formItemNo]))
                 }
             }
+            return Promise.all(promiseArr2);
+        })
+        .then(function (row) {
+            // console.log(returnVal)
+            for(var i = 0; i< row.length; i++)
+                for(var j = 0; j<row[i].length; j++){
+                // console.log(returnVal[0].items[0])
+                // console.log(row[i][j].index,row[i][j].jindex)
+                    returnVal[row[i][j].index].items[row[i][j].jindex].items= row[i]
+                    if(i==row.length-1 && j == row[i].length)
+                        return 1;
+                }
+        })
+        .then(function (row) {
+            res.send(returnVal)
         })
         .catch(function (err) {
             console.log(err)
             res.sendStatus(500);
         })
 });
-router.get('/order',function (req, res) {
-    var storeNo = req.query.storeNo
-    var status = req.query.status
-    var returnVal;
-    var query = 'SELECT form_group_no `formGroupNo` FROM 16drop.form_group where form_form_no =1 order by form_group_no asc'
-    var promiseArr =[];
-    pool.query(query)
-        .then(function (row) {
-            var query = ' select menu_name_en "name", price, cnt from order_detail where order_no =?'
-            for(var i = 0; i<row.length; i++){
-                promiseArr.push(pool.query(query,[row[i].orderNo]))
-            }
-            returnVal = row;
-            return 0;
-        })
-        .then(function () {
-            console.log(promiseArr);
-            return Promise.all(promiseArr);
-        })
-        .then(function (rows) {
-            console.log(rows)
-            for(var i=0;i<rows.length;i++){
-                returnVal[i].menu=rows[i]
-            }
-            res.send(returnVal)
-        })
+router.post('/answer',function (req, res) {
+    var userNo = req.body.item;
+    pool.query('SELECT form_group_no `formGroupNo`, title, descript  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[userNo]).
+    then(function(rows) {
+        res.send(rows);
+    })
         .catch(function (err) {
-            console.log(err)
-            res.status(404).send(err);
+            res.send(err);
         })
 })
 module.exports = router;
