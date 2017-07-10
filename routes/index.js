@@ -9,7 +9,7 @@ pool = mysql.createPool(dbconfig);
 
 router.get('/', function(req, res){
     var userNo = req.header('userNo')
-    pool.query('SELECT form_no `formNo`, title , description, propose, due  FROM 16drop.form where store_no=1',[userNo]).
+    pool.query('SELECT form_no `formNo`, title , description, propose, due  FROM 16drop.form where store_no=1',[]).
     then(function(rows) {
         res.send(rows[0]);
     })
@@ -19,7 +19,7 @@ router.get('/', function(req, res){
 });
 router.get('/title', function(req, res){
     var userNo = req.header('userNo')
-    pool.query('SELECT form_group_no `formGroupNo`, title, descript  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[userNo]).
+    pool.query('SELECT form_group_no `formGroupNo`, title, descript, disp  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[]).
         then(function(rows) {
             res.send(rows);
         })
@@ -31,13 +31,15 @@ router.get('/title', function(req, res){
 router.get('/items', function(req, res){
     var userNo = req.header('userNo')
     var returnVal;
+    var returnVal2;
     var itemVal=[];
     var promiseArr =[];
     var promiseArr2 =[];
-    pool.query('SELECT form_group_no `formGroupNo`, title, descript  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[userNo]).
+    var promiseArr3 =[];
+    pool.query('SELECT form_group_no `formGroupNo`, title, descript, disp  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[]).
         then(function(row) {
 
-            var query = ' select title, type , form_item_no "formItemNo" from form_item where form_group_no =?  order by number asc'
+            var query = ' select title, type , form_item_no "formItemNo", `trigger` from form_item where form_group_no =?  order by number asc'
             for(var i = 0; i<row.length; i++){
                 promiseArr.push(pool.query(query,[row[i].formGroupNo]))
             }
@@ -52,7 +54,7 @@ router.get('/items', function(req, res){
             for(var i = 0 ; i< returnVal.length; i++){
                 returnVal[i].items = rows[i];
             }
-            var query = ' select ? "index",? "jindex", content ,score,description from select_item where form_item_no =? order by number asc'
+            var query = ' select ? "index",? "jindex", content ,score,description, select_item_no from select_item where form_item_no =? order by number asc'
             for(var i = 0; i<rows.length; i++) {
                 for (var j = 0; j < rows[i].length; j++) {
                     promiseArr2.push(pool.query(query, [i,j,rows[i][j].formItemNo]))
@@ -71,22 +73,45 @@ router.get('/items', function(req, res){
                         return 1;
                 }
         })
+        .then(function (r) {
+            return pool.query('select user_info_no, descript, type from user_info where form_no =1',[]);;
+        })
         .then(function (row) {
-            res.send(returnVal)
+            var query = ' select user_info_select_no, title  from user_info_select where user_info_no =?  order by user_info_select_no asc'
+            for(var i = 0; i<row.length; i++){
+                promiseArr3.push(pool.query(query,[row[i].user_info_no]))
+            }
+            returnVal2 = row;
+            return 0;
+        })
+        .then(function () {
+            return Promise.all(promiseArr3);
+        })
+        .then(function (rows) {
+            itemVal = rows;
+            for (var i = 0; i < returnVal2.length; i++) {
+                returnVal2[i].items = rows[i];
+            }
+            return 0;
+        })
+        .then(function (row) {
+            res.send({user:returnVal2,items:returnVal})
         })
         .catch(function (err) {
             console.log(err)
             res.sendStatus(500);
         })
 });
-router.post('/answer',function (req, res) {
-    var userNo = req.body.item;
-    pool.query('SELECT form_group_no `formGroupNo`, title, descript  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[userNo]).
+router.post('/apply',function (req, res) {
+    var user = req.body.user;
+    var age = req.body.age;
+
+    pool.query('insert into user_form (form_no, name, age,sex,email,phone,type) values (1,?,?,?,?,?)',[user.name,user.age,user.sex,user.email,user.phone,user.tpye]).
     then(function(rows) {
-        res.send(rows);
+        res.send({userFormNo:rows.insertId});
     })
         .catch(function (err) {
-            res.send(err);
+            res.status(500).send(err);
         })
-})
+});
 module.exports = router;
