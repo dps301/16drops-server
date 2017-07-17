@@ -40,8 +40,7 @@ router.get('/items', function(req, res){
     var total2=0;
     pool.query('SELECT form_group_no `formGroupNo`, title, descript, disp  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[]).
         then(function(row) {
-
-            var query = ' select  title, type , form_item_no "formItemNo", `trigger` from form_item where form_group_no =?  order by number asc'
+            var query = ' select  title, type , form_item_no "formItemNo", `limit` from form_item where form_group_no =? and use_yn=1  order by number asc'
             for(var i = 0; i<row.length; i++){
                 promiseArr.push(pool.query(query,[row[i].formGroupNo]))
             }
@@ -78,7 +77,7 @@ router.get('/items', function(req, res){
                 }
         })
         .then(function (r) {
-            return pool.query('select user_info_no "formItemNo", title, type from user_info where form_no =1',[]);;
+            return pool.query('select user_info_no "formItemNo", title, type from user_info where form_no =1 and use_yn=1',[]);;
         })
         .then(function (row) {
             var query = ' select user_info_select_no "no", content  from user_info_select where user_info_no =?  order by user_info_select_no asc'
@@ -109,14 +108,37 @@ router.get('/items', function(req, res){
 });
 router.post('/apply',function (req, res) {
     var user = req.body.user;
-    var age = req.body.age;
+    var items = req.body.items;
+    var userFormNo;
+    var promiseArr = [];
+    var promiseArr2 = [];
 
-    pool.query('insert into user_form (form_no, name, age,sex,email,phone,type) values (1,?,?,?,?,?)',[user.name,user.age,user.sex,user.email,user.phone,user.tpye]).
-    then(function(rows) {
-        res.send({userFormNo:rows.insertId});
-    })
+    pool.query('insert into user_form (form_no) values (1)',[])
+        .then(function(rows) {
+            userFormNo=rows.insertId
+            for( var i = 0 ; i<user.length;i++){
+                promiseArr.push(pool.query('insert into user_info_item (answer, user_form_no, user_info_no,title) values (?,?,?,?)',[rows.insertId,user.answer,user.form_item_no,user.title]))
+            }
+            return 1;
+        })
+        .then(function (row) {
+            for( var i = 0 ; i<items.length;i++){
+                promiseArr2.push(pool.query('insert into user_item (form_item_no, select_item_no, user_form_no) values (?,?,?,?)',[items[i].form_item_no,items[i].no,userFormNo]))
+            }
+            return Promise.all(promiseArr);
+        })
+        .then(function (row) {
+            return Promise.all(promiseArr2);
+        })
+        .then(function () {
+
+        })
         .catch(function (err) {
             res.status(500).send(err);
         })
 });
+router.post('log',function (req, res) {
+    console.log(req.body)
+    res.send(req.body)
+})
 module.exports = router;
