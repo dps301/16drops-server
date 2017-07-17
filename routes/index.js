@@ -36,10 +36,12 @@ router.get('/items', function(req, res){
     var promiseArr =[];
     var promiseArr2 =[];
     var promiseArr3 =[];
+    var total1=0;
+    var total2=0;
     pool.query('SELECT form_group_no `formGroupNo`, title, descript, disp  FROM 16drop.form_group where form_no =1 order by form_group_no asc;',[]).
         then(function(row) {
 
-            var query = ' select title, type , form_item_no "formItemNo", `trigger` from form_item where form_group_no =?  order by number asc'
+            var query = ' select  title, type , form_item_no "formItemNo", `trigger` from form_item where form_group_no =?  order by number asc'
             for(var i = 0; i<row.length; i++){
                 promiseArr.push(pool.query(query,[row[i].formGroupNo]))
             }
@@ -54,9 +56,11 @@ router.get('/items', function(req, res){
             for(var i = 0 ; i< returnVal.length; i++){
                 returnVal[i].items = rows[i];
             }
-            var query = ' select ? "index",? "jindex", content ,score,description, select_item_no from select_item where form_item_no =? order by number asc'
+            var query = ' select ? "index",? "jindex", content ,score,description, select_item_no "no" from select_item where form_item_no =? order by number asc'
+
             for(var i = 0; i<rows.length; i++) {
                 for (var j = 0; j < rows[i].length; j++) {
+                    total1++;
                     promiseArr2.push(pool.query(query, [i,j,rows[i][j].formItemNo]))
                 }
             }
@@ -68,18 +72,19 @@ router.get('/items', function(req, res){
                 for(var j = 0; j<row[i].length; j++){
                 // console.log(returnVal[0].items[0])
                 // console.log(row[i][j].index,row[i][j].jindex)
-                    returnVal[row[i][j].index].items[row[i][j].jindex].items= row[i]
+                    returnVal[row[i][j].index].items[row[i][j].jindex].items= row[i];
                     if(i==row.length-1 && j == row[i].length)
                         return 1;
                 }
         })
         .then(function (r) {
-            return pool.query('select user_info_no, descript, type from user_info where form_no =1',[]);;
+            return pool.query('select user_info_no "formItemNo", title, type from user_info where form_no =1',[]);;
         })
         .then(function (row) {
-            var query = ' select user_info_select_no, title  from user_info_select where user_info_no =?  order by user_info_select_no asc'
+            var query = ' select user_info_select_no "no", content  from user_info_select where user_info_no =?  order by user_info_select_no asc'
             for(var i = 0; i<row.length; i++){
-                promiseArr3.push(pool.query(query,[row[i].user_info_no]))
+                total2++
+                promiseArr3.push(pool.query(query,[row[i].formItemNo]))
             }
             returnVal2 = row;
             return 0;
@@ -95,7 +100,7 @@ router.get('/items', function(req, res){
             return 0;
         })
         .then(function (row) {
-            res.send({user:returnVal2,items:returnVal})
+            res.send({user:returnVal2,items:returnVal,total:total1+total2,userTotal:total2,itemsTotal:total1})
         })
         .catch(function (err) {
             console.log(err)
