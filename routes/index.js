@@ -113,17 +113,25 @@ router.post('/apply',function (req, res) {
     var promiseArr = [];
     var promiseArr2 = [];
 
+    console.log(req.body)
+
     pool.query('insert into user_form (form_no) values (1)',[])
         .then(function(rows) {
             userFormNo=rows.insertId
             for( var i = 0 ; i<user.length;i++){
-                promiseArr.push(pool.query('insert into user_info_item (answer, user_form_no, user_info_no,title) values (?,?,?,?)',[rows.insertId,user.answer,user.form_item_no,user.title]))
+                promiseArr.push(pool.query('insert into user_info_item (answer, user_form_no, user_info_no,title) values (?,?,?,?)',[user.answer,userFormNo,user.form_item_no,user.title]))
             }
             return 1;
         })
         .then(function (row) {
             for( var i = 0 ; i<items.length;i++){
-                promiseArr2.push(pool.query('insert into user_item (form_item_no, select_item_no, user_form_no) values (?,?,?,?)',[items[i].form_item_no,items[i].no,userFormNo]))
+                if(items[i].type == 2){
+                    for(var j=0; j<items[i].no.length;j++){
+                        promiseArr2.push(pool.query('insert into user_item (form_item_no, select_item_no, user_form_no) values (?,?,?)',[items[i].no[j].form_item_no,items[i].no[j].no,userFormNo]))
+                    }
+                } else {
+                    promiseArr2.push(pool.query('insert into user_item (form_item_no, select_item_no, user_form_no) values (?,?,?)',[items[i].form_item_no,items[i].no,userFormNo]))
+                }
             }
             return Promise.all(promiseArr);
         })
@@ -131,9 +139,42 @@ router.post('/apply',function (req, res) {
             return Promise.all(promiseArr2);
         })
         .then(function () {
-
+            var let = 'insert into 16drop.user_form_result (user_form_no,con1,con2,con3,con4,con5,`check`)' +
+                ' values' +
+                ' (?,' +
+                ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                ' c.form_item_no = b.form_item_no' +
+                ' and b.form_group_no=1' +
+                ' and c.select_item_no = a.select_item_no' +
+                ' and c.user_form_no=?),' +
+                ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                ' c.form_item_no = b.form_item_no' +
+                ' and b.form_group_no=4' +
+                ' and c.select_item_no = a.select_item_no' +
+                ' and c.user_form_no=?),' +
+                ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                ' c.form_item_no = b.form_item_no' +
+                ' and b.form_group_no=5' +
+                ' and c.select_item_no = a.select_item_no' +
+                ' and c.user_form_no=?),' +
+                ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                ' c.form_item_no = b.form_item_no' +
+                ' and b.form_group_no=6' +
+                ' and c.select_item_no = a.select_item_no' +
+                ' and c.user_form_no=?),' +
+                ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                ' c.form_item_no = b.form_item_no' +
+                ' and b.form_group_no=7' +
+                ' and c.select_item_no = a.select_item_no' +
+                ' and c.user_form_no=?' +
+                ' ),1)';
+            return pool.query(let,[userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo])
+        })
+        .then(function (row) {
+            res.send('ok')
         })
         .catch(function (err) {
+            console.log(err)
             res.status(500).send(err);
         })
 });
