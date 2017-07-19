@@ -23,6 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'views')));
 app.use("/*", cors());
 app.use('/', index);
 app.use('/user', user);
@@ -32,8 +33,6 @@ app.get('/',function (req, res) {
 app.get('/view',function (req, res) {
     res.sendFile(path.join(__dirname+'/public/2/index.html'));
 });
-
-
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
