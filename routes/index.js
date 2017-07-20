@@ -114,13 +114,17 @@ router.post('/apply',function (req, res) {
     var promiseArr2 = [];
     var promiseArr3 = [];
 
-    console.log(req.body)
-
     pool.query('insert into user_form (form_no) values (1)',[])
         .then(function(rows) {
             userFormNo=rows.insertId
             for( var i = 0 ; i<user.length;i++){
-                promiseArr.push(pool.query('insert into user_info_item (answer, user_form_no, user_info_no,title) values (?,?,?,?)',[user.answer,userFormNo,user.form_item_no,user.title]))
+                if(items[i].type == 0 || items[i].type == 2){
+                    for(var j=0; j<items[i].no.length;j++){
+                        promiseArr.push(pool.query('insert into user_info_item (answer, user_form_no, user_info_no,title) values (?,?,?,?)',[user[i].answer,userFormNo,user[i].form_item_no,user[i].title]))
+                    }
+                } else {
+                    promiseArr.push(pool.query('insert into user_info_item (answer, user_form_no, user_info_no,title) values (?,?,?,?)',[user[i].no,userFormNo,user[i].form_item_no,user[i].title]))
+                }
             }
             return 1;
         })
