@@ -112,6 +112,7 @@ router.post('/apply',function (req, res) {
     var userFormNo;
     var promiseArr = [];
     var promiseArr2 = [];
+    var promiseArr3 = [];
 
     console.log(req.body)
 
@@ -139,7 +140,7 @@ router.post('/apply',function (req, res) {
             return Promise.all(promiseArr2);
         })
         .then(function () {
-            var let = 'insert into 16drop.user_form_result (user_form_no,con1,con2,con3,con4,con5,`check`,re1,re2,re3,re4,re5,re6)' +
+            var let = 'insert into 16drop.user_form_result (user_form_no,con1,con2,con3,con4,con5,`check`,re6)' +
                 ' values' +
                 ' (?,' +
                 ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
@@ -147,11 +148,23 @@ router.post('/apply',function (req, res) {
                 ' and b.form_group_no=1' +
                 ' and c.select_item_no = a.select_item_no' +
                 ' and c.user_form_no=?),' +
-                ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
-                ' c.form_item_no = b.form_item_no' +
-                ' and b.form_group_no=4' +
-                ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?),' +
+                ' ( select (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                    ' c.form_item_no = b.form_item_no' +
+                    ' and b.form_item_no in (66,24,25)' +
+                    ' and b.form_group_no=4' +
+                    ' and c.select_item_no = a.select_item_no' +
+                    ' and c.user_form_no=?) +' +
+                    ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                    ' c.form_item_no = b.form_item_no' +
+                    ' and b.form_item_no =26' +
+                    ' and b.form_group_no=4 ' +
+                    ' and c.select_item_no = a.select_item_no' +
+                    ' and c.user_form_no=?) * (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                    ' c.form_item_no = b.form_item_no' +
+                    ' and b.form_item_no in (27,28)' +
+                    ' and b.form_group_no=4' +
+                    ' and c.select_item_no = a.select_item_no' +
+                    ' and c.user_form_no=?) "an" ),' +
                 ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
                 ' c.form_item_no = b.form_item_no' +
                 ' and b.form_group_no=5' +
@@ -162,52 +175,70 @@ router.post('/apply',function (req, res) {
                 ' and b.form_group_no=6' +
                 ' and c.select_item_no = a.select_item_no' +
                 ' and c.user_form_no=?),' +
+                ' (' +
+                ' select (select if(sum(a.score)=0,0,sum(a.score)-1) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
+                ' c.form_item_no = b.form_item_no' +
+                ' and b.form_item_no =36' +
+                ' and b.form_group_no=6' +
+                ' and c.select_item_no = a.select_item_no' +
+                ' and c.user_form_no=?)+' +
                 ' (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
                 ' c.form_item_no = b.form_item_no' +
                 ' and b.form_group_no=7' +
                 ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?' +
+                ' and c.user_form_no=?) "an" '+
                 ' ),' +
                 ' (SELECT count(*) FROM 16drop.user_item where form_item_no = 26 and select_item_no = 55 and user_form_no=?)' +
                 ' ,' +
-                ' (select  d.result from 16drop.form_condition d where (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
-                ' c.form_item_no = b.form_item_no' +
-                ' and b.form_group_no=1' +
-                ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?) between d.mean-0.1 and d.max+0.1 and d.form_group_no = 1)' +
-                ' ,' +
-                ' (select  d.result from 16drop.form_condition d where (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
-                ' c.form_item_no = b.form_item_no' +
-                ' and b.form_group_no=4' +
-                ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?) between d.mean-0.1 and d.max+0.1 and d.form_group_no = 4)' +
-                ' ,' +
-                ' (select  d.result from 16drop.form_condition d where (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
-                ' c.form_item_no = b.form_item_no' +
-                ' and b.form_group_no=5' +
-                ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?) between d.mean-0.1 and d.max+0.1 and d.form_group_no = 5)' +
-                ' ,' +
-                ' (select  d.result from 16drop.form_condition d where (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
-                ' c.form_item_no = b.form_item_no' +
-                ' and b.form_group_no=6' +
-                ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?) between d.mean-0.1 and d.max+0.1 and d.form_group_no = 6)' +
-                ' ,' +
-                ' (select  d.result from 16drop.form_condition d where (select sum(a.score) from 16drop.select_item a , 16drop.form_item b , 16drop.user_item c where' +
-                ' c.form_item_no = b.form_item_no' +
-                ' and b.form_group_no=7' +
-                ' and c.select_item_no = a.select_item_no' +
-                ' and c.user_form_no=?) between d.mean-0.1 and d.max+0.1 and d.form_group_no = 7)' +
-                ' ,(SELECT count(*) FROM 16drop.user_item where form_item_no = 26 and select_item_no = 55 and user_form_no=?)' +
+                ' (SELECT count(*) FROM 16drop.user_item where form_item_no = 26 and select_item_no = 55 and user_form_no=?)' +
                 '' +
                 '' +
                 ')';
-            console.log(let);
-            return pool.query(let,[userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo])
+            return pool.query(let,[userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo,userFormNo])
         })
         .then(function (row) {
-            res.send('ok')
+            promiseArr3.push(pool.query('select a.result from 16drop.form_condition a , 16drop.user_form_result b where b.user_form_no =? and a.form_group_no=1 and b.con1 between a.mean-0.1 and a.`max`+0.1',[userFormNo]))
+            promiseArr3.push(pool.query('select a.result from 16drop.form_condition a , 16drop.user_form_result b where b.user_form_no =? and a.form_group_no=4 and b.con2 between a.mean-0.1 and a.`max`+0.1',[userFormNo]))
+            promiseArr3.push(pool.query('select a.result from 16drop.form_condition a , 16drop.user_form_result b where b.user_form_no =? and a.form_group_no=5 and b.con3 between a.mean-0.1 and a.`max`+0.1',[userFormNo]))
+            promiseArr3.push(pool.query('select a.result from 16drop.form_condition a , 16drop.user_form_result b where b.user_form_no =? and a.form_group_no=6 and b.con4 between a.mean-0.1 and a.`max`+0.1',[userFormNo]))
+            promiseArr3.push(pool.query('select a.result from 16drop.form_condition a , 16drop.user_form_result b where b.user_form_no =? and a.form_group_no=7 and b.con5 between a.mean-0.1 and a.`max`+0.1',[userFormNo]))
+            return 1
+        })
+        .then(function (row) {
+            return Promise.all(promiseArr3);
+        })
+        .then(function (row) {
+            var buket =[];
+            for(var i=0; i<row.length;i++){
+                buket[i] = (row[i])[0].result;
+            }
+            var let = ' update 16drop.user_form_result set' +
+                ' re1=?' +
+                ' ,re2 =?' +
+                ' ,re3 =?' +
+                ' ,re4 =?' +
+                ' ,re5 =?' +
+                ' where user_form_no =?'
+            return pool.query(let,[buket[0],buket[1],buket[2],buket[3],buket[4],userFormNo])
+        })
+        .then(function (row) {
+            var sql = 'SELECT' +
+                ' a.name "name" ' +
+                ' FROM' +
+                ' 16drop.form_result a,' +
+                ' 16drop.user_form_result b' +
+                ' WHERE' +
+                ' (a.an1 = b.re1 or isnull(a.an1))' +
+                ' and (a.an2 = b.re2 or isnull(a.an2))' +
+                ' and (a.an3 = b.re3 or isnull(a.an3))' +
+                ' and (a.an4 = b.re4 or isnull(a.an4))' +
+                ' and (a.an5 = b.re5 or isnull(a.an5))' +
+                ' and (a.an6 = b.re6 or isnull(a.an6))' +
+                ' and b.user_form_no=?'
+            return pool.query(sql,[userFormNo])
+        })
+        .then(function (row) {
+            res.send({name:row[0].name})
         })
         .catch(function (err) {
             console.log(err)
